@@ -552,6 +552,32 @@ def must_be_ipv6(value: typing.Any, use: str) -> typing.Union[bool,str]:
   return True
 
 @type_test()
+def must_be_prefix_str(value: typing.Any) -> typing.Union[bool,str,typing.Callable]:
+
+  def transform_to_ipv4(value: typing.Any) -> dict:
+    return { 'ipv4': value }
+
+  def transform_to_ipv6(value: typing.Any) -> dict:
+    return { 'ipv6': value }
+
+  if not isinstance(value,str) or not '/' in value:
+    return 'IPv4 or IPv6 prefix'
+
+  try:
+    parse = netaddr.IPNetwork(value)                                  # now let's check if we have a valid address
+  except Exception as ex:
+    return "NWT: IPv4 or IPv6 prefix"
+
+  try:                                                                # ... and finally we have to check it's a true IPv4 address
+    parse.ipv4()
+    if not parse.is_ipv4_mapped():
+      return transform_to_ipv4
+  except Exception as ex:
+    pass
+
+  return transform_to_ipv6
+
+@type_test()
 def must_be_mac(value: typing.Any) -> typing.Union[bool,str]:
   if not isinstance(value,str):
     return 'MAC address'

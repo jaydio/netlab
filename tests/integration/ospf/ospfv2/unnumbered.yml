@@ -1,15 +1,32 @@
 message: |
   This topology tests OSPFv2 over unnumbered IPv4 interfaces. You should
-  get OSPF adjacency between R1 and R2, and routes for both loopbacks
-  in the IP routing table.
+  get OSPF adjacency between DUT (device-under-test, your router) and
+  EXT (external router running Cumulus Linux), and routes for both loopbacks
+  in the IP routing tables. 
 
   If your device works with this topology, set the ospf.unnumbered feature flag.
 
 module: [ ospf ]
 
-nodes: [ r1, r2 ]
+nodes:
+  dut:
+    id: 1
+  ext:
+    device: cumulus
 
 links:
-- r1:
-  r2:
+- dut:
+  ext:
   prefix.ipv4: True
+
+validate:
+  wait:
+    description: Waiting for OSPF to start
+    wait: 15
+  adj:
+    description: Is OSPF adjacency up?
+    nodes: [ ext ]
+    devices: [ cumulus ]
+    show: ip ospf neighbor 10.0.0.1 json
+    valid:
+      result["10.0.0.1"][0].nbrState == "Full"
